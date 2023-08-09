@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[project]
+name = "stac-static"
+authors = [
+    {name = "Julia Signell", email = "jsignell@element84.com"}
+]
+classifiers = [ "License :: OSI Approved :: MIT License",]
+dependencies = [
+    "pystac",
+    "geopandas",
+    "pygeofilter",
+    "stac_geoparquet",
+]
+requires-python = ">=3.8"
+description = "Search for static STAC catalogs"
+license = {text = "MIT"}
+readme = "README.md"
+dynamic = ["version"]
+
+[project.urls]
+Home = "https://github.com/jsignell/stac-static"
+Repository = "https://github.com/jsignell/stac-static"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pre-commit",
+]
+
+[tool.setuptools.packages.find]
+include = [
+    "stac_static",
+]
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W", "I"]

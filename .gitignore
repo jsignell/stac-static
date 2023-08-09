@@ -1,0 +1,8 @@
+__pycache__
+.coverage
+htmlcov
+dist
+.direnv
+.mypy_cache
+.pytest_cache
+.ruff_cache

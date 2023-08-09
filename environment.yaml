@@ -1,0 +1,16 @@
+name: stac-static-dev
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python
+  # required
+  - geopandas
+  - pygeofilter
+  - pystac
+  - pip
+  - pip:
+    - stac_geoparquet
+  # testing
+  - pytest
+  - pytest-cov
