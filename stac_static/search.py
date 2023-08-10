@@ -1,4 +1,5 @@
 import json
+from functools import cached_property, cache
 from copy import deepcopy
 from datetime import datetime as datetime_
 from enum import Enum
@@ -16,9 +17,11 @@ from typing import (
 import numpy as np
 import pystac
 import shapely
+import geopandas
 from pygeofilter.backends.geopandas.evaluate import to_filter
 from pygeofilter.parsers import cql2_json, cql2_text
-
+from stac_static.utils import catalog_to_geodataframe
+import stac_geoparquet
 
 class Parsers(Enum):
     cql2_json = cql2_json.parse
@@ -30,6 +33,8 @@ class GeoInterface(Protocol):
     def __geo_interface__(self) -> Dict[str, Any]:
         ...
 
+
+CatalogLike = Union[pystac.Catalog, geopandas.GeoDataFrame]
 
 DatetimeOrTimestamp = Optional[Union[datetime_, str]]
 Datetime = str
@@ -52,19 +57,19 @@ FilterLangLike = str
 FilterLike = Union[Dict[str, Any], str]
 
 
-def search(catalog, **params):
+def search(catalog: CatalogLike, **params):
     return ItemSearch(catalog, **params)
 
 
-def _search(df, **params):
+def _search(df: geopandas.GeoDataFrame, **params):
     subset = df.copy()
 
     if "ids" in params:
-        params["ids"]
+        ids = params["ids"]
         subset = subset.query("id in @ids")
 
     if "collections" in params:
-        params["collections"]
+        collections = params["collections"]
         subset = subset.query("collection in @collections")
 
     if "bbox" in params:
@@ -85,15 +90,6 @@ def _search(df, **params):
     return subset
 
 
-def to_geoparquet(catalog: pystac.Catalog):
-    import stac_geoparquet
-
-    dicts = [item.to_dict() for item in catalog.get_items(recursive=True)]
-    df = stac_geoparquet.to_geodataframe(dicts)
-
-    df.to_parquet(f"{catalog.id}.parq")
-
-
 class ItemSearch:
     """Represents a deferred query to a static STAC catalog that mimics
     `STAC API - Item Search spec
@@ -106,7 +102,7 @@ class ItemSearch:
     to those docs for details on how these parameters filter search results.
 
     Args:
-        catalog : pystac.Catalog object
+        catalog : pystac.Catalog object or geopandas.GeoDataFrame representation of STAC items
         ids: List of one or more Item ids to filter on.
         collections: List of one or more Collection IDs or :class:`pystac.Collection`
             instances. Only Items in one
@@ -127,7 +123,7 @@ class ItemSearch:
 
     def __init__(
         self,
-        catalog: pystac.Catalog,
+        catalog: CatalogLike,
         *,
         ids: Optional[ListLike] = None,
         collections: Optional[ListLike] = None,
@@ -136,7 +132,10 @@ class ItemSearch:
         filter: Optional[FilterLike] = None,
         filter_lang: Optional[FilterLangLike] = None,
     ):
-        self.catalog = catalog
+        if isinstance(catalog, pystac.Catalog):
+            self.df = catalog_to_geodataframe(catalog)
+        else:
+            self.df = catalog
 
         params = {
             "bbox": self._format_bbox(bbox),
@@ -206,8 +205,54 @@ class ItemSearch:
 
         return bbox
 
-    def as_dataframe(self):
-        return _search(self.catalog._df, **self._parameters)
+    @property
+    def parameters(self):
+        """Read-only view of parameters"""
+        return self._parameters.copy()
+
+    @cached_property
+    def result(self) -> geopandas.GeoDataFrame:
+        return _search(self.df, **self.parameters)
+
+    def as_geodataframe(self):
+        return self.result
 
     def matched(self):
-        return len(_search(self.catalog._df, **self._parameters))
+        """Number matched for search
+
+        NOTE: Unlike pystac-client this will trigger the search
+
+        Returns:
+            int: Total count of matched items.
+        """
+        return len(self.result)
+
+    @cache
+    def item_collection(self) -> pystac.ItemCollection:
+        """
+        Get the matching items as a :py:class:`pystac.ItemCollection`.
+
+        Return:
+            ItemCollection: The item collection
+        """
+        return stac_geoparquet.to_item_collection(self.result)
+
+    def items(self) -> Iterator[pystac.Item]:
+        """Iterator that yields :class:`pystac.Item` instances for each item matching
+        the given search parameters.
+
+        Yields:
+            Item : each Item matching the search criteria
+        """
+        for item in self.item_collection():
+            yield item
+
+    def items_as_dicts(self) -> Iterator[Dict[str, Any]]:
+        """Iterator that yields :class:`dict` instances for each item matching
+        the given search parameters.
+
+        Yields:
+            Item : each Item matching the search criteria
+        """
+        for item in self.items():
+            yield item.to_dict()

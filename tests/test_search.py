@@ -27,7 +27,7 @@ def test_ids(test_case_1):
 
 def test_collections(test_case_1):
     result = search(test_case_1, collections="area-1-1")
-    df = result.as_dataframe()
+    df = result.as_geodataframe()
     assert len(df) == 2
     assert df.collection.unique().tolist() == ["area-1-1"]
 

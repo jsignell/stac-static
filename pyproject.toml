@@ -16,7 +16,7 @@ dependencies = [
     "pygeofilter",
     "stac_geoparquet",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 description = "Search for static STAC catalogs"
 license = {text = "MIT"}
 readme = "README.md"
