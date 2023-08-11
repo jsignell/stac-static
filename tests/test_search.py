@@ -1,5 +1,6 @@
 import json
 
+import pandas as pd
 import pytest
 
 from stac_static import search
@@ -60,3 +61,20 @@ def test_intersects(test_case_1):
 def test_filter(test_case_1, filter, n):
     result = search(test_case_1, filter=filter)
     assert result.matched() == n
+
+
+@pytest.mark.parametrize(
+    "value,start,end",
+    [
+        (
+            "2022",
+            pd.Timestamp("2022-01-01T00:00:00", tz="utc"),
+            pd.Timestamp("2022-12-31T23:59:59.999999999", tz="utc"),
+        ),
+        ("../2022-03", None, pd.Timestamp("2022-03-31T23:59:59.999999999", tz="utc")),
+        ("2022-03/..", pd.Timestamp("2022-03-01T00:00:00", tz="utc"), None),
+    ],
+)
+def test_datetime_params(value, start, end, planet_disaster):
+    result = search(planet_disaster, datetime=value)
+    assert result._parameters["datetime"] == (start, end)
