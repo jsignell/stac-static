@@ -1,1 +1,1 @@
-from stac_static.search import search
+from stac_static.search import search  # noqa
