@@ -68,12 +68,12 @@ def _search(df: geopandas.GeoDataFrame, **params):
     subset = df.copy()
 
     if "ids" in params:
-        params["ids"]
-        subset = subset.query("id in @ids")
+        ids = params["ids"]
+        subset = subset[subset["id"].isin(ids)]
 
     if "collections" in params:
-        params["collections"]
-        subset = subset.query("collection in @collections")
+        collections = params["collections"]
+        subset = subset[subset["collection"].isin(collections)]
 
     if "bbox" in params:
         bbox = params["bbox"]
