@@ -179,7 +179,7 @@ class ItemSearch:
         filter: Optional[FilterLike] = None,
         filter_lang: Optional[FilterLangLike] = None,
     ):
-        if isinstance(catalog, pystac.Catalog):
+        if isinstance(catalog, (pystac.Catalog, pystac.Collection, pystac.ItemCollection)):
             self.df = to_geodataframe(catalog)
         else:
             self.df = catalog
