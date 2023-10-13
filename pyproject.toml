@@ -28,8 +28,12 @@ Repository = "https://github.com/jsignell/stac-static"
 
 [project.optional-dependencies]
 dev = [
-  "pytest",
-  "pre-commit",
+    "absolufy-imports",
+    "black",
+    "pytest",
+    "pre-commit",
+    "pyupgrade",
+    "ruff",
 ]
 
 [tool.setuptools.packages.find]

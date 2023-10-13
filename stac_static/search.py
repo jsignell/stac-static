@@ -1,16 +1,13 @@
 import json
+from collections.abc import Iterator
 from copy import deepcopy
 from datetime import datetime as datetime_
 from enum import Enum
 from functools import cache, cached_property
 from typing import (
     Any,
-    Dict,
-    Iterator,
-    List,
     Optional,
     Protocol,
-    Tuple,
     Union,
 )
 
@@ -33,31 +30,31 @@ class Parsers(Enum):
 
 class GeoInterface(Protocol):
     @property
-    def __geo_interface__(self) -> Dict[str, Any]:
+    def __geo_interface__(self) -> dict[str, Any]:
         ...
 
 
 CatalogLike = Union[pystac.Catalog, geopandas.GeoDataFrame]
 
 DatetimeOrTimestamp = Optional[Union[datetime_, str, pd.Timestamp]]
-Datetime = Tuple[pd.Timestamp, pd.Timestamp]
+Datetime = tuple[pd.Timestamp, pd.Timestamp]
 DatetimeLike = Union[
     DatetimeOrTimestamp,
-    Tuple[DatetimeOrTimestamp, DatetimeOrTimestamp],
-    List[DatetimeOrTimestamp],
+    tuple[DatetimeOrTimestamp, DatetimeOrTimestamp],
+    list[DatetimeOrTimestamp],
     Iterator[DatetimeOrTimestamp],
 ]
 
-BBox = Tuple[float, ...]
-BBoxLike = Union[BBox, List[float], Iterator[float], str]
+BBox = tuple[float, ...]
+BBoxLike = Union[BBox, list[float], Iterator[float], str]
 
-ListLike = Union[List[str], Iterator[str], str]
+ListLike = Union[list[str], Iterator[str], str]
 
-Intersects = Dict[str, Any]
+Intersects = dict[str, Any]
 IntersectsLike = Union[str, GeoInterface, Intersects]
 
 FilterLangLike = str
-FilterLike = Union[Dict[str, Any], str]
+FilterLike = Union[dict[str, Any], str]
 
 
 def search(catalog: CatalogLike, **params):
@@ -179,7 +176,9 @@ class ItemSearch:
         filter: Optional[FilterLike] = None,
         filter_lang: Optional[FilterLangLike] = None,
     ):
-        if isinstance(catalog, (pystac.Catalog, pystac.Collection, pystac.ItemCollection)):
+        if isinstance(
+            catalog, (pystac.Catalog, pystac.Collection, pystac.ItemCollection)
+        ):
             self.df = to_geodataframe(catalog)
         else:
             self.df = catalog
@@ -194,7 +193,7 @@ class ItemSearch:
             "filter-lang": self._format_filter_lang(filter, filter_lang),
         }
 
-        self._parameters: Dict[str, Any] = {
+        self._parameters: dict[str, Any] = {
             k: v for k, v in params.items() if v is not None
         }
 
@@ -235,7 +234,7 @@ class ItemSearch:
             )
 
     @staticmethod
-    def _format_listlike(value: Optional[ListLike]) -> Optional[Tuple[str, ...]]:
+    def _format_listlike(value: Optional[ListLike]) -> Optional[tuple[str, ...]]:
         if value is None:
             return None
 
@@ -330,7 +329,7 @@ class ItemSearch:
         """
         yield from self.item_collection()
 
-    def items_as_dicts(self) -> Iterator[Dict[str, Any]]:
+    def items_as_dicts(self) -> Iterator[dict[str, Any]]:
         """Iterator that yields :class:`dict` instances for each item matching
         the given search parameters.
 
