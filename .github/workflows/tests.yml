@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: checkout repo
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
 
       - name: setup micromamba
         uses: mamba-org/provision-with-micromamba@main
@@ -48,3 +48,25 @@ jobs:
       - name: run tests
         id: status
         run: pytest -v --cov --cov-report term-missing .
+
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install with test dependencies
+        run: pip install .[dev]
+
+      - name: Execute linters & type checkers
+        run: pre-commit run --all-files
