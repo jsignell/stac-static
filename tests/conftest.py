@@ -17,6 +17,11 @@ def test_case_1(request):
 
 @pytest.fixture(scope="module")
 def planet_disaster():
-    """planet_disaster as a catalog"""
+    """planet_disaster as a collection"""
     URL = here / "data-files" / "planet-disaster" / "collection.json"
     return pystac.read_file(URL)
+
+
+@pytest.fixture(scope="module")
+def item_collection(planet_disaster):
+    return pystac.ItemCollection(items=list(planet_disaster.get_items(recursive=True)))

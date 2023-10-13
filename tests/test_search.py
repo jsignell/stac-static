@@ -78,3 +78,8 @@ def test_filter(test_case_1, filter, n):
 def test_datetime_params(value, start, end, planet_disaster):
     result = search(planet_disaster, datetime=value)
     assert result._parameters["datetime"] == (start, end)
+
+
+def test_item_collection_eo(item_collection):
+    result = search(item_collection, filter="eo:cloud_cover < 10")
+    assert result.matched() == 4
